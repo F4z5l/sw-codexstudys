@@ -1462,8 +1462,8 @@ body,.header,.course-card,.chip,.btn,.stat-card,.cx-th-card{transition:backgroun
         </div>
       </div>
       <div class="header-right">
-        <button class="inst-header-btn" id="inst-header-btn" onclick="swHeaderInstall()" title="Install App">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <button id="install-app-btn" class="inst-header-btn" onclick="installSelectionWay()" aria-label="Install SelectionWay app">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
           Install
         </button>
         <button class="tg-header-btn" onclick="openTgPopup()">
@@ -1652,6 +1652,58 @@ body,.header,.course-card,.chip,.btn,.stat-card,.cx-th-card{transition:backgroun
   </div>
 </div>
 
+
+<style id="cx-fix-perf-player">
+/* ── SCROLL PERFORMANCE FIX ── */
+.orb{will-change:auto!important;}
+@media (max-width:1024px){
+  .orb{animation:none!important;filter:blur(38px)!important;opacity:.75;}
+  .bg-grid{opacity:.5;}
+  .course-card,.class-card,.live-class-card,.topic-card{animation:none!important;}
+  .card-id{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+  .chips,.tabs-nav{backdrop-filter:blur(6px)!important;-webkit-backdrop-filter:blur(6px)!important;}
+}
+.course-card,.class-card,.live-class-card,.topic-card,.faq-item{
+  content-visibility:auto;contain-intrinsic-size:auto 140px;
+}
+.grid,#videos-inner,#notes-inner{transform:translateZ(0);}
+
+/* ── IN-APP VIDEO PLAYER ── */
+.cx-player-overlay{position:fixed;inset:0;z-index:600;display:none;background:rgba(3,2,10,.92);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:14px;}
+.cx-player-overlay.open{display:flex;}
+.cx-player-box{width:100%;max-width:900px;background:rgba(10,10,24,.96);border:1px solid rgba(255,255,255,.12);
+  border-radius:18px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.55);}
+.cx-player-top{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08);}
+.cx-player-title{flex:1;min-width:0;font-size:.85rem;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cx-player-close{flex:none;width:32px;height:32px;border-radius:10px;border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.06);color:#fff;font-size:1rem;line-height:1;cursor:pointer;}
+.cx-player-stage{position:relative;width:100%;aspect-ratio:16/9;background:#000;}
+.cx-player-stage video,.cx-player-stage iframe{width:100%;height:100%;display:block;border:0;background:#000;}
+.cx-player-msg{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;
+  padding:18px;color:#cfd3e6;font-size:.82rem;flex-direction:column;gap:10px;}
+.cx-player-msg.show{display:flex;}
+.cx-player-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px 14px;}
+.cx-q-btn{padding:6px 12px;border-radius:999px;font-size:.72rem;font-weight:700;cursor:pointer;
+  border:1px solid rgba(0,245,212,.28);background:rgba(0,245,212,.08);color:#00f5d4;}
+.cx-q-btn.active{background:#00f5d4;color:#04121a;}
+.cx-player-link{margin-left:auto;font-size:.72rem;color:#9aa0bd;text-decoration:underline;}
+</style>
+
+<!-- ══ IN-APP PLAYER ══ -->
+<div class="cx-player-overlay" id="cx-player" onclick="if(event.target===this)closePlayer()">
+  <div class="cx-player-box">
+    <div class="cx-player-top">
+      <div class="cx-player-title" id="cx-player-title">Lecture</div>
+      <button class="cx-player-close" onclick="closePlayer()" aria-label="Close">✕</button>
+    </div>
+    <div class="cx-player-stage" id="cx-player-stage">
+      <div class="cx-player-msg" id="cx-player-msg"></div>
+    </div>
+    <div class="cx-player-bar" id="cx-player-bar"></div>
+  </div>
+</div>
+
 <!-- ══ QUALITY MODAL ══ -->
 <div class="modal-overlay" id="quality-modal" onclick="closeQualityModal(event)">
   <div class="modal-sheet">
@@ -1679,6 +1731,20 @@ body,.header,.course-card,.chip,.btn,.stat-card,.cx-th-card{transition:backgroun
   </div>
 </div>
 
+
+<!-- ══ INSTALL POPUP ══ -->
+<div class="sw-install-overlay" id="sw-install-popup">
+  <div class="sw-install-card">
+    <button class="sw-install-close" onclick="closeInstallPopup()" aria-label="Close">&times;</button>
+    <img src="/app/icon-192.png" alt="SelectionWay app icon" class="sw-install-icon"/>
+    <h3 class="sw-install-title">Install SelectionWay App</h3>
+    <p class="sw-install-text">Fast access, full-screen experience aur ek tap me open — app install karke seekhte raho.</p>
+    <button class="sw-install-btn" id="sw-install-action" onclick="installPopupAction()">Install App</button>
+    <div class="sw-install-ios" id="sw-install-ios" style="display:none">iPhone/iPad: Share <span aria-hidden="true">&#8599;</span> &rarr; <b>Add to Home Screen</b> pe tap karein.</div>
+    <button class="sw-install-later" onclick="closeInstallPopup()">Maybe later</button>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div id="toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:400;padding:11px 22px;border-radius:12px;font-size:0.82rem;font-weight:700;color:#000;pointer-events:none;backdrop-filter:blur(8px);transition:opacity 0.3s,transform 0.3s;white-space:nowrap;font-family:'Space Grotesk',sans-serif;"></div>
 
@@ -1688,11 +1754,68 @@ const SW_KEY='cxEnrolled_v2';
 let allCourses=[];
 let currentFilter='all';
 let currentBatchId=null;
+const API_BASE='https://backend.multistreaming.site';
 let batchData=null;
 let videoTopicSelected=null;
 let notesTopicSelected=null;
 let currentQualityList=[];
 let topicsCache={};
+let selectionWayInstallPrompt=null;
+
+// Install button hamesha (permanent) dikhta hai — kabhi hide nahi hota.
+function setInstallAvailable(_available){
+  const btn=document.getElementById('install-app-btn');
+  if(btn)btn.style.display='flex';
+}
+async function installSelectionWay(){
+  if(selectionWayInstallPrompt){
+    await selectionWayInstallPrompt.prompt();
+    const choice=await selectionWayInstallPrompt.userChoice;
+    if(choice.outcome==='accepted')selectionWayInstallPrompt=null;
+    return;
+  }
+  window.parent.postMessage({type:'SELECTIONWAY_INSTALL_REQUEST'},location.origin);
+  // Native prompt available nahi hai (iPhone/unsupported browser) → popup dikhao jisme instructions hain.
+  openInstallPopup();
+}
+window.addEventListener('beforeinstallprompt',event=>{
+  event.preventDefault();selectionWayInstallPrompt=event;setInstallAvailable(true);
+});
+window.addEventListener('message',event=>{
+  if(event.origin!==location.origin)return;
+  if(event.data&&event.data.type==='SELECTIONWAY_INSTALL_AVAILABLE')setInstallAvailable(true);
+  if(event.data&&event.data.type==='SELECTIONWAY_INSTALL_RESULT'&&event.data.outcome==='accepted')setInstallAvailable(false);
+});
+window.addEventListener('DOMContentLoaded',()=>{
+  if(window.matchMedia('(display-mode: standalone)').matches)setInstallAvailable(false);
+  else window.parent.postMessage({type:'SELECTIONWAY_INSTALL_STATUS'},location.origin);
+});
+
+// ── INSTALL POPUP (har baar web khulne pe) ──
+function openInstallPopup(){
+  const ov=document.getElementById('sw-install-popup');
+  if(!ov)return;
+  ov.style.display='flex';
+  requestAnimationFrame(()=>ov.classList.add('open'));
+}
+function closeInstallPopup(){
+  const ov=document.getElementById('sw-install-popup');
+  if(!ov)return;
+  ov.classList.remove('open');
+  setTimeout(()=>{ov.style.display='none';},300);
+}
+async function installPopupAction(){
+  await installSelectionWay();
+  if(!selectionWayInstallPrompt)closeInstallPopup();
+}
+window.addEventListener('appinstalled',()=>{closeInstallPopup();setInstallAvailable(false);});
+window.addEventListener('DOMContentLoaded',()=>{
+  const installed=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+  if(installed)return;
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.MSStream;
+  if(ios)document.getElementById('sw-install-ios').style.display='block';
+  setTimeout(openInstallPopup,1200);
+});
 
 function getEnrolled(){try{const v=JSON.parse(localStorage.getItem(SW_KEY)||'[]');return Array.isArray(v)?v:[];}catch{return[];}}
 function saveEnrolled(ids){localStorage.setItem(SW_KEY,JSON.stringify(ids));}
@@ -1735,7 +1858,7 @@ function closeSearch(){
 async function initHome(){
   renderGrid('<div class="loader-wrap"><div class="cx-loader"></div></div>');
   try{
-    const res=await fetch('https://backend.multistreaming.site/api/courses/');
+    const res=await fetch(`${API_BASE}/api/courses/`);
     if(!res.ok)throw new Error('API error '+res.status);
     const j=await res.json();
     if(j.state!==200)throw new Error(j.message||'Error loading');
@@ -1880,7 +2003,7 @@ async function loadBatch(id){
   document.getElementById('batch-hdr-title').textContent='';
   document.getElementById('batch-hero-inner').innerHTML='<div class="loader-wrap"><div class="cx-loader"></div></div>';
   try{
-    const res=await fetch(`https://backend.multistreaming.site/api/courses/${id}`);
+    const res=await fetch(`${API_BASE}/api/courses/${id}`);
     if(!res.ok)throw new Error('Failed '+res.status);
     const j=await res.json();
     if(j.state!==200)throw new Error(j.message||'Error');
@@ -1976,11 +2099,11 @@ async function loadVideosTab(){
   if(videoTopicSelected){renderVideoTopic(videoTopicSelected);return;}
   el.innerHTML='<div class="loader-wrap"><div class="cx-loader"></div></div>';
   try{
-    const res=await fetch(`https://backend.multistreaming.site/api/courses/${currentBatchId}/classes?populate=full`);
+    const res=await fetch(`${API_BASE}/api/courses/${currentBatchId}/classes?populate=full`);
     const j=await res.json();
     const topics=(j.state===200&&j.data?.classes)?j.data.classes:[];
     const valid=topics.filter(t=>(t.classes||[]).length>0);
-    if(!valid.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🎬</div><h3>No Videos Yet</h3><p>Coming soon.</p></div>';return;}
+    if(!valid.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🎬</div><h3>No lectures yet</h3><p>Is batch me abhi lectures upload nahi hue. Thodi der baad check karein.</p></div>';return;}
     topicsCache.videos=valid;
     el.innerHTML=valid.map((t,i)=>`
       <div class="topic-card" onclick="selectVideoTopic(${i})">
@@ -2011,8 +2134,11 @@ function renderVideoTopic(topic){
 function backToVideoTopics(){videoTopicSelected=null;loadVideosTab();}
 
 function renderClassCard(cls){
-  const hasMulti=cls.mp4Recordings&&cls.mp4Recordings.length>1;
-  const hasSingle=cls.mp4Recordings&&cls.mp4Recordings.length===1;
+  const _srcs=classSources(cls);
+  const _canPlay=hasPlayable(cls);
+  const _key='cxc_'+Math.random().toString(36).slice(2);
+  window._cxClassRefs=window._cxClassRefs||{};
+  window._cxClassRefs[_key]=cls;
   return`
   <div class="class-card">
     <div class="class-card-head">
@@ -2028,13 +2154,20 @@ function renderClassCard(cls){
         </div>
       </div>
     </div>
-    ${hasMulti||hasSingle?`<div style="padding:12px 16px;">
-      ${hasMulti
-        ?`<div style="display:flex;flex-wrap:wrap;gap:6px;">${cls.mp4Recordings.map(r=>`<button class="btn btn-cx btn-sm" onclick="openLink('${esc(r.url)}')">▶ ${esc(r.quality)}</button>`).join('')}</div>`
-        :`<button class="btn btn-cx" style="width:100%;" onclick="openLink('${esc(cls.mp4Recordings[0].url)}')">
-            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            Watch Recording</button>`}
-    </div>`:''}
+    <div style="padding:12px 16px;">
+      ${_srcs.length>1
+        ?`<div style="display:flex;flex-wrap:wrap;gap:6px;">${_srcs.map(r=>`<button class="btn btn-cx btn-sm" onclick="openLink('${esc(r.url)}')">▶ ${esc(r.quality)}</button>`).join('')}</div>`
+        :(_srcs.length===1
+          ?`<button class="btn btn-cx" style="width:100%;" onclick="openLink('${esc(_srcs[0].url)}')">
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Watch Recording</button>`
+          :(cls.class_link
+            ?`<button class="btn btn-cx" style="width:100%;" onclick="openLink('${esc(cls.class_link)}')">
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Watch Recording</button>`
+            :`<button class="btn btn-disabled" style="width:100%;" disabled>Recording soon</button>`))}
+      ${(cls.classPdf&&cls.classPdf.length)?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${cls.classPdf.map(p=>`<button class="btn btn-outline btn-sm" onclick="openLink('${esc(p.url)}')">📄 Notes</button>`).join('')}</div>`:''}
+    </div>
   </div>`;
 }
 
@@ -2044,11 +2177,11 @@ async function loadNotesTab(){
   if(notesTopicSelected){renderNotesTopic(notesTopicSelected);return;}
   el.innerHTML='<div class="loader-wrap"><div class="cx-loader"></div></div>';
   try{
-    const res=await fetch(`https://gdgoenkaratia.com/api/courses/${currentBatchId}/pdfs?groupBy=topic`);
+    const res=await fetch(`${API_BASE}/api/courses/${currentBatchId}/pdfs?groupBy=topic`);
     const j=await res.json();
     const topics=(j.state===200&&j.data?.topics)?j.data.topics:[];
     const valid=topics.filter(t=>(t.pdfs||[]).length>0);
-    if(!valid.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📄</div><h3>No Notes Yet</h3><p>Notes coming soon.</p></div>';return;}
+    if(!valid.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📄</div><h3>No notes yet</h3><p>Is batch ke notes abhi upload nahi hue.</p></div>';return;}
     topicsCache.notes=valid;
     el.innerHTML=valid.map((t,i)=>`
       <div class="topic-card" onclick="selectNotesTopic(${i})">
@@ -2095,14 +2228,21 @@ async function renderTimetableTab(b){
     <div style="font-size:2rem;opacity:0.3;margin-bottom:8px;">📡</div>
     <p style="font-size:0.82rem;color:var(--muted);">No classes scheduled today.</p></div>`;
   try{
-    const res=await fetch(`https://gdgoenkaratia.com/api/courses/${currentBatchId}/todays-classes`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Origin':'https://www.selectionway.com'},
-      body:JSON.stringify({}),cache:'no-store'
-    });
+    // Today's classes derived from the batch class list (dedicated endpoint no longer exists)
+    const res=await fetch(`${API_BASE}/api/courses/${currentBatchId}/classes?populate=full`,{cache:'no-store'});
     if(res.ok){
       const j=await res.json();
-      const classes=j?.data?.classes||[];
+      const topics=j?.data?.classes||[];
+      const flat=[];topics.forEach(t=>(t.classes||[]).forEach(c=>flat.push(c)));
+      const today=new Date();
+      const sameDay=d=>{const x=new Date(d);return x.getFullYear()===today.getFullYear()&&x.getMonth()===today.getMonth()&&x.getDate()===today.getDate();};
+      let classes=flat.filter(c=>c.startDate&&sameDay(c.startDate));
+      if(!classes.length){
+        classes=flat.filter(c=>c.isLive&&c.streamStatus!=='ended');
+      }
+      if(!classes.length){
+        classes=flat.filter(c=>c.startDate).sort((a,b)=>new Date(b.startDate)-new Date(a.startDate)).slice(0,5);
+      }
       if(classes.length>0){
         const sorted=[...classes].sort((a,b)=>{const o={LIVE:0,Upcoming:1,Completed:2};return(o[getLiveStatus(a)]??2)-(o[getLiveStatus(b)]??2);});
         liveHtml=sorted.map(c=>renderLiveCard(c)).join('');
@@ -2142,17 +2282,15 @@ function renderLiveCard(cls){
     :'<span class="badge bdg-completed">Done</span>';
 
   let action='';
+  const _lkey='cxl_'+Math.random().toString(36).slice(2);
+  window._cxClassRefs=window._cxClassRefs||{};
+  window._cxClassRefs[_lkey]=cls;
   if(status==='LIVE'&&cls.class_link){
-    action=`<button class="btn btn-live" style="width:100%;margin-top:10px;" onclick="openLink('${esc(cls.class_link)}')">
+    action=`<button class="btn btn-live" style="width:100%;margin-top:10px;" onclick="playClassRef('${_lkey}')">
       <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49"/></svg>Join Live</button>`;
-  }else if(status==='Completed'&&hasRec){
-    if(cls.mp4Recordings.length>1){
-      action='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">'+
-        cls.mp4Recordings.map(r=>`<button class="btn btn-cx btn-sm" onclick="openLink('${esc(r.url)}')">▶ ${esc(r.quality)}</button>`).join('')+'</div>';
-    }else{
-      action=`<button class="btn btn-cx" style="width:100%;margin-top:10px;" onclick="openLink('${esc(cls.mp4Recordings[0].url)}')">
-        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>Watch Recording</button>`;
-    }
+  }else if(status==='Completed'&&hasPlayable(cls)){
+    action=`<button class="btn btn-cx" style="width:100%;margin-top:10px;" onclick="playClassRef('${_lkey}')">
+      <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>Watch Recording</button>`;
   }else if(status==='Upcoming'){
     action=`<button class="btn btn-disabled" style="width:100%;margin-top:10px;" disabled>⏳ Upcoming</button>`;
   }
@@ -2203,8 +2341,139 @@ function closeQualityModal(e){
   document.getElementById('quality-modal').classList.remove('open');
 }
 
+
+// ── IN-APP LECTURE PLAYER (fix: lectures used to download instead of play) ──
+let cxPlayerState={sources:[],idx:0,link:'',title:''};
+function qRank(q){const n=parseInt(String(q||'').replace(/[^0-9]/g,''),10);return isNaN(n)?0:n;}
+function isYouTube(u){return /youtube\.com|youtu\.be/i.test(u||'');}
+function ytId(u){
+  const m=String(u||'').match(/(?:v=|youtu\.be\/|embed\/|shorts\/|live\/)([A-Za-z0-9_-]{6,})/);
+  return m?m[1]:'';
+}
+function classSources(cls){
+  let recs=(cls&&cls.mp4Recordings||[]).filter(r=>r&&r.url);
+  recs=recs.slice().sort((a,b)=>qRank(b.quality)-qRank(a.quality));
+  return recs;
+}
+function hasPlayable(cls){return classSources(cls).length>0||!!(cls&&cls.class_link);}
+function playClass(cls,title){
+  const recs=classSources(cls);
+  const url=recs.length?recs[0].url:((cls&&cls.class_link)||'');
+  if(!url){showToast('Recording abhi available nahi hai','error');return;}
+  openPlayer(title||cls.title||'Lecture',recs,url);
+}
+function playClassById(topicKind,ti,ci){
+  const list=(topicsCache[topicKind]||[]);
+  const t=list[ti]; if(!t)return;
+  const cls=(t.classes||[])[ci]; if(!cls)return;
+  playClass(cls);
+}
+function openPlayer(title,sources,link){
+  cxPlayerState={sources:sources||[],idx:0,link:link||'',title:title||'Lecture',tried:{}};
+  document.getElementById('cx-player-title').textContent=cxPlayerState.title;
+  document.getElementById('cx-player').classList.add('open');
+  document.body.style.overflow='hidden';
+  renderPlayerBar();
+  mountPlayerSource(true);
+}
+function closePlayer(){
+  const st=document.getElementById('cx-player-stage');
+  const v=st.querySelector('video'); if(v){try{v.pause();}catch(e){} v.removeAttribute('src'); try{v.load();}catch(e){}}
+  if(window._cxHls){try{window._cxHls.destroy();}catch(e){} window._cxHls=null;}
+  st.querySelectorAll('video,iframe').forEach(n=>n.remove());
+  document.getElementById('cx-player').classList.remove('open');
+  document.body.style.overflow='';
+}
+function playerMsg(html){
+  const m=document.getElementById('cx-player-msg');
+  if(!html){m.classList.remove('show');m.innerHTML='';return;}
+  m.innerHTML=html;m.classList.add('show');
+}
+function renderPlayerBar(){
+  const bar=document.getElementById('cx-player-bar');
+  const s=cxPlayerState;
+  let h='';
+  if(s.sources.length>1){
+    h+=s.sources.map((r,i)=>`<button class="cx-q-btn ${i===s.idx?'active':''}" onclick="switchQuality(${i})">${esc(r.quality||('Q'+(i+1)))}</button>`).join('');
+  }
+  const ext=s.sources.length?s.sources[s.idx].url:s.link;
+  if(ext)h+=`<a class="cx-player-link" href="${esc(ext)}" target="_blank" rel="noopener">Open in browser</a>`;
+  bar.innerHTML=h;
+}
+function switchQuality(i){
+  if(!cxPlayerState.sources[i])return;
+  cxPlayerState.idx=i;renderPlayerBar();mountPlayerSource(true);
+}
+function loadHlsLib(){
+  if(window.Hls)return Promise.resolve(window.Hls);
+  if(window._cxHlsLoad)return window._cxHlsLoad;
+  window._cxHlsLoad=new Promise((res,rej)=>{
+    const sc=document.createElement('script');
+    sc.src='https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js';
+    sc.onload=()=>res(window.Hls);sc.onerror=rej;document.head.appendChild(sc);
+  });
+  return window._cxHlsLoad;
+}
+function playerFallback(url,tried){
+  // sabse pehle baaki qualities try karo, phir native browser player (iframe) me chalao
+  const s=cxPlayerState;
+  for(let i=0;i<s.sources.length;i++){
+    if(i!==s.idx&&!cxPlayerState.tried[i]){cxPlayerState.idx=i;renderPlayerBar();mountPlayerSource();return;}
+  }
+  const st=document.getElementById('cx-player-stage');
+  st.querySelectorAll('video,iframe').forEach(n=>n.remove());
+  const fr=document.createElement('iframe');
+  fr.src=url;fr.allow='autoplay; encrypted-media; fullscreen; picture-in-picture';fr.allowFullscreen=true;
+  st.appendChild(fr);
+  playerMsg('');
+}
+function mountPlayerSource(reset){
+  const st=document.getElementById('cx-player-stage');
+  st.querySelectorAll('video,iframe').forEach(n=>n.remove());
+  if(window._cxHls){try{window._cxHls.destroy();}catch(e){} window._cxHls=null;}
+  playerMsg('');
+  const s=cxPlayerState;
+  if(reset||!s.tried)s.tried={};
+  const url=s.sources.length?s.sources[s.idx].url:s.link;
+  if(!url){playerMsg('<div>Is lecture ki recording abhi available nahi hai.</div>');return;}
+  s.tried[s.idx]=true;
+
+  if(isYouTube(url)){
+    const id=ytId(url);
+    const fr=document.createElement('iframe');
+    fr.src=id?`https://www.youtube.com/embed/${id}?autoplay=1&playsinline=1&rel=0`:url;
+    fr.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen';
+    fr.allowFullscreen=true;fr.referrerPolicy='origin';
+    st.appendChild(fr);return;
+  }
+
+  const v=document.createElement('video');
+  v.controls=true;v.autoplay=true;v.playsInline=true;v.setAttribute('playsinline','');
+  v.preload='metadata';v.controlsList='nodownload';
+  v.onerror=()=>playerFallback(url);
+  st.appendChild(v);
+
+  const isHls=/\.m3u8(\?|$)/i.test(url);
+  if(isHls){
+    if(v.canPlayType('application/vnd.apple.mpegurl')){v.src=url;v.play().catch(()=>{});return;}
+    loadHlsLib().then(Hls=>{
+      if(Hls&&Hls.isSupported()){
+        const h=new Hls({lowLatencyMode:true});window._cxHls=h;
+        h.on(Hls.Events.ERROR,(_e,d)=>{if(d&&d.fatal)playerFallback(url);});
+        h.loadSource(url);h.attachMedia(v);
+      }else{v.src=url;}
+    }).catch(()=>{v.src=url;});
+    return;
+  }
+  v.src=url;
+  v.play().catch(()=>{});
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('cx-player')?.classList.contains('open'))closePlayer();});
+
 // ── HELPERS ──
 function openLink(url){if(url)window.open(url,'_blank','noopener,noreferrer');}
+function playClassRef(k){const c=(window._cxClassRefs||{})[k];if(c)playClass(c);}
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 
 // ── TELEGRAM POPUP ──
@@ -2485,20 +2754,6 @@ function showToast(msg,type='success'){
 </script>
 
 
-<!-- ===== Install App Popup ===== -->
-<div class="sw-install-overlay" id="sw-install" onclick="if(event.target===this)swInstallClose()">
-  <div class="sw-install-card">
-    <button class="sw-install-close" onclick="swInstallClose()" aria-label="Close">&times;</button>
-    <img class="sw-install-icon" src="icon-192.png" alt="SELECTIONWAY app icon"/>
-    <h3 class="sw-install-title">Install SELECTIONWAY App</h3>
-    <p class="sw-install-text">Add SELECTIONWAY to your home screen for one-tap access and a full-screen app experience — free, no Play Store needed.</p>
-    <button class="sw-install-btn" id="sw-install-btn" onclick="swInstallNow()">⬇ Install App</button>
-    <div class="sw-install-ios" id="sw-install-ios" style="display:none">
-      <p>On iPhone/iPad: tap the <b>Share</b> button <span style="font-size:1.1em">⎋</span> in Safari, then choose <b>"Add to Home Screen"</b>.</p>
-    </div>
-    <button class="sw-install-later" onclick="swInstallClose()">Maybe later</button>
-  </div>
-</div>
 <style>
 .sw-install-overlay{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;
   background:rgba(5,3,12,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:0;transition:opacity .3s;}
@@ -2523,80 +2778,6 @@ function showToast(msg,type='success'){
 .sw-install-later{margin-top:12px;border:none;background:none;cursor:pointer;font-size:.85rem;font-weight:600;color:var(--muted2,#999);}
 .sw-install-later:hover{color:var(--txt,#fff);}
 </style>
-<script>
-(function(){
-  var deferredPrompt = null;
-  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  var isStandalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
-
-  window.addEventListener('beforeinstallprompt', function(e){
-    e.preventDefault();
-    deferredPrompt = e;
-  });
-
-  window.swInstallOpen = function(){
-    if (isStandalone) return;
-    var o = document.getElementById('sw-install');
-    if (!o) return;
-    if (!deferredPrompt) {
-      document.getElementById('sw-install-btn').style.display = isIOS ? 'none' : 'none';
-      document.getElementById('sw-install-ios').style.display = 'block';
-      document.querySelector('#sw-install-ios p').innerHTML = isIOS
-        ? 'On iPhone/iPad: tap the <b>Share</b> button in Safari, then choose <b>"Add to Home Screen"</b>.'
-        : 'Open your browser menu <b>⋮</b> and tap <b>"Install app"</b> or <b>"Add to Home screen"</b>.';
-    }
-    o.style.display = 'flex';
-    requestAnimationFrame(function(){ o.classList.add('open'); });
-  };
-
-  window.swInstallClose = function(){
-    var o = document.getElementById('sw-install');
-    if (!o) return;
-    o.classList.remove('open');
-    setTimeout(function(){ o.style.display = 'none'; }, 300);
-    try { localStorage.setItem('sw-install-dismissed', Date.now()); } catch(e){}
-  };
-
-  window.swInstallNow = function(){
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(function(choice){
-        deferredPrompt = null;
-        if (choice.outcome === 'accepted') swInstallClose();
-      });
-    }
-  };
-
-  // Header install button: one tap install when supported, otherwise show instructions popup
-  window.swHeaderInstall = function(){
-    if (deferredPrompt) {
-      swInstallNow();
-    } else {
-      swInstallOpen();
-    }
-  };
-  function swSyncHeaderBtn(){
-    var b = document.getElementById('inst-header-btn');
-    if (b) b.classList.toggle('installed', !!isStandalone);
-  }
-  swSyncHeaderBtn();
-
-  window.addEventListener('appinstalled', function(){
-    isStandalone = true; swSyncHeaderBtn();
-    swInstallClose();
-    try { if (window.showToast) showToast('App installed! 🎉','success'); } catch(e){}
-  });
-
-  // Show popup shortly after load, unless installed or dismissed in the last 3 days
-  setTimeout(function(){
-    if (isStandalone) return;
-    var last = 0;
-    try { last = parseInt(localStorage.getItem('sw-install-dismissed') || '0', 10); } catch(e){}
-    if (Date.now() - last < 3*24*60*60*1000) return;
-    swInstallOpen();
-  }, 2500);
-})();
-</script>
 
 </body>
   </html>
